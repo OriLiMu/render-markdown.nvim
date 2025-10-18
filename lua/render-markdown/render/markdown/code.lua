@@ -151,19 +151,70 @@ function Render:language(info, language, delim)
     local prefix = self:line()
     -- code blocks can pick up varying amounts of leading white space
     -- this is lumped into the delimiter node and needs to be handled
-    prefix:rep(border, str.spaces('start', delim.text), border_hl)
+    prefix:rep(border, str.spaces('start', delim.text), border_highlight)
+
     if self.config.position == 'left' then
-        prefix:rep(border, self.data.language, border_hl)
-        body:rep(border, width - prefix:width() - body:width(), border_hl)
+        prefix:rep(border, self.data.language, border_highlight)
+        local remaining_space = width - prefix:width() - body:width()
+        if remaining_space > 0 then
+            -- Create highlight group with foreground matching background color to fix white space issue
+            local normal_hl = vim.api.nvim_get_hl(0, { name = 'Normal', link = false })
+            local bg_color = normal_hl.bg
+
+            local bg_highlight = 'RenderMarkdownBackgroundMatch'
+            if bg_color then
+                vim.api.nvim_set_hl(0, bg_highlight, {
+                    fg = bg_color,  -- Set foreground to match background
+                    bg = nil,        -- No background needed
+                })
+            else
+                bg_highlight = 'Normal'
+            end
+
+            body:rep(border, remaining_space, bg_highlight)
+        end
     else
-        body:rep(border, self.data.language, border_hl)
-        prefix:rep(border, width - prefix:width() - body:width(), border_hl)
+        body:rep(border, self.data.language, border_highlight)
+        local remaining_space = width - prefix:width() - body:width()
+        if remaining_space > 0 then
+            -- Create highlight group with foreground matching background color to fix white space issue
+            local normal_hl = vim.api.nvim_get_hl(0, { name = 'Normal', link = false })
+            local bg_color = normal_hl.bg
+
+            local bg_highlight = 'RenderMarkdownBackgroundMatch'
+            if bg_color then
+                vim.api.nvim_set_hl(0, bg_highlight, {
+                    fg = bg_color,  -- Set foreground to match background
+                    bg = nil,        -- No background needed
+                })
+            else
+                bg_highlight = 'Normal'
+            end
+
+            prefix:rep(border, remaining_space, bg_highlight)
+        end
     end
 
     local line = prefix:extend(body)
     if self.config.width == 'full' then
-        line:rep(border, vim.o.columns, border_hl)
+        -- Use the same background matching highlight for full width filling
+        local normal_hl = vim.api.nvim_get_hl(0, { name = 'Normal', link = false })
+        local bg_color = normal_hl.bg
+
+        local bg_highlight = 'RenderMarkdownBackgroundMatch'
+        if bg_color then
+            vim.api.nvim_set_hl(0, bg_highlight, {
+                fg = bg_color,  -- Set foreground to match background
+                bg = nil,        -- No background needed
+            })
+        else
+            bg_highlight = 'Normal'
+        end
+
+        line:rep(border, vim.o.columns, bg_highlight)
     end
+
+    -- Apply the virtual text
     return self.marks:start(self.config, 'code_language', delim, {
         virt_text = line:get(),
         virt_text_pos = 'overlay',
