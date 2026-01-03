@@ -4,17 +4,53 @@
 
 ### Features
 
+- handle latex converters as fallback [13bfaaa](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/13bfaaabaaf732cf58d14004ed79b331bb40b838)
+- support anti-conceal ignore for inline latex [e6a5cf4](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/e6a5cf4edb228ebdab835252f1de19381ed41aa6)
+- add priority to code background [#563](https://github.com/MeanderingProgrammer/render-markdown.nvim/pull/563)
+- add more default link icons [#565](https://github.com/MeanderingProgrammer/render-markdown.nvim/pull/565)
+- add more YouTube domains [#569](https://github.com/MeanderingProgrammer/render-markdown.nvim/pull/569)
+
+### Bug Fixes
+
+- handle double width glyph checkboxes [#553](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/553)
+  [f58c05f](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/f58c05f349d6e7650f4b40b0df1514400f0c10de)
+- link icons following long checkboxes [#564](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/564)
+  [b2b1353](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/b2b135347e299ffbf7f4123fb7811899b0c9f4b8)
+- reduce code background priority in nofile buffers [26097a4](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/26097a4eb95b391d0308c1b77cce89b28bbc9916)
+- ignore inline highlights that start or end in nested node [#568](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/568)
+  [7a43c8b](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/7a43c8b444fa15b7736b34b248addb951126f723)
+
+### Collaborator Shoutouts
+
+- @Lutetium-Vanadium
+- @chrisgrieser
+
+## 8.10.0 (2025-11-08)
+
+### Features
+
 - add footnote icon [ceff151](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/ceff15170c173c9a62ba491ac6449858cbadadf3)
 - configurable scope priority [#534](https://github.com/MeanderingProgrammer/render-markdown.nvim/discussions/534)
   [e174f52](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/e174f524cd4f07789ef8083fa0e1c3573e7fe328)
 - left padding for checkboxes [da260dd](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/da260dd4979d130f0dfc63e824c9cb2433cfded2)
 - dash width function [#537](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/537)
   [691651d](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/691651de4e02cbea9ff50c62d7d3a679abc95564)
+- implement preview split [72f658d](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/72f658d7c506fff6a10bee4e7fa2af081f91489b)
+- custom inline highlight based on prefix [#544](https://github.com/MeanderingProgrammer/render-markdown.nvim/discussions/544)
+  [10126ef](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/10126effbafb74541b69219711dfb2c631e7ebf8)
+- support configuration via `vim.g.render_markdown_config` [a1b2bf0](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/a1b2bf029c37397947082f31969b4aec0d1b92bd)
+- provide more capable render API [060c911](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/060c911c62f995a9db4467dde6fafd699cf94d55)
 
 ### Bug Fixes
 
 - ignore empty output from latex converter [#535](https://github.com/MeanderingProgrammer/render-markdown.nvim/issues/535)
   [2064980](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/2064980580af7f00385859b6344c6a4737383257)
+- use nil if bg is missing in bg_as_fg [bfd67f1](https://github.com/MeanderingProgrammer/render-markdown.nvim/commit/bfd67f1402b97ac619cb538f4bbaed12a7fa89aa)
+- ctermbg heading borders being all white [#546](https://github.com/MeanderingProgrammer/render-markdown.nvim/pull/546)
+
+### Collaborator Shoutouts
+
+- @bew
 
 ## 8.9.0 (2025-10-06)
 

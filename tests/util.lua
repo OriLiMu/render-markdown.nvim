@@ -79,6 +79,7 @@ function M.highlight(kind)
     local priority ---@type integer?
     local highlight ---@type string
     if kind == 'code' then
+        priority = vim.bo.buftype == 'nofile' and 175 or nil
         highlight = 'RmCodeInline'
     elseif kind == 'inline' then
         highlight = 'RmInlineHighlight'
@@ -133,6 +134,7 @@ function M.link(kind)
     local highlight = kind == 'wiki' and 'RmWikiLink' or 'RmLink'
     ---@type vim.api.keyset.set_extmark
     return {
+        priority = 9000,
         hl_mode = 'combine',
         virt_text = { { icons[kind], highlight } },
         virt_text_pos = 'inline',
@@ -311,6 +313,7 @@ end
 function M.code.bg()
     ---@type vim.api.keyset.set_extmark
     return {
+        priority = vim.bo.buftype == 'nofile' and 175 or nil,
         hl_eol = true,
         hl_group = 'RmCode',
     }

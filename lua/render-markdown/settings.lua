@@ -27,6 +27,7 @@ M.anti_conceal.element = {
     head_border = 'head_border',
     head_icon = 'head_icon',
     indent = 'indent',
+    latex = 'latex',
     link = 'link',
     quote = 'quote',
     sign = 'sign',
@@ -54,6 +55,7 @@ M.anti_conceal.default = {
     --   dash
     --   head_background, head_border, head_icon
     --   indent
+    --   latex
     --   link
     --   quote
     --   sign
@@ -205,13 +207,15 @@ function M.bullet.schema()
     })
 end
 
+---@class (exact) render.md.raw.Config
+---@field raw string
+
 ---@class render.md.callout.Settings
 M.callout = {}
 
 ---@alias render.md.callout.Configs table<string, render.md.callout.Config>
 
----@class (exact) render.md.callout.Config
----@field raw string
+---@class (exact) render.md.callout.Config: render.md.raw.Config
 ---@field rendered string
 ---@field highlight string
 ---@field quote_icon? string
@@ -291,8 +295,7 @@ M.checkbox = {}
 ---@field highlight string
 ---@field scope_highlight? string
 
----@class (exact) render.md.checkbox.custom.Config
----@field raw string
+---@class (exact) render.md.checkbox.custom.Config: render.md.raw.Config
 ---@field rendered string
 ---@field highlight string
 ---@field scope_highlight? string
@@ -401,6 +404,7 @@ M.code = {}
 ---@field inline_left string
 ---@field inline_right string
 ---@field inline_pad integer
+---@field priority? integer
 ---@field highlight string
 ---@field highlight_info string
 ---@field highlight_language? string
@@ -507,6 +511,8 @@ M.code.default = {
     inline_right = '',
     -- Padding to add to the left & right of inline code.
     inline_pad = 0,
+    -- Priority to assign to code background highlight.
+    priority = nil,
     -- Highlight for code blocks.
     highlight = 'RenderMarkdownCode',
     -- Highlight for code info section, after the language.
@@ -556,6 +562,7 @@ function M.code.schema()
         inline_left = { type = 'string' },
         inline_right = { type = 'string' },
         inline_pad = { type = 'number' },
+        priority = { optional = true, type = 'number' },
         highlight = { type = 'string' },
         highlight_info = { type = 'string' },
         highlight_language = { optional = true, type = 'string' },
@@ -951,8 +958,15 @@ M.html = {}
 
 ---@class (exact) render.md.html.comment.Config
 ---@field conceal boolean
----@field text? string
+---@field text? render.md.html.comment.String
 ---@field highlight string
+
+---@class (exact) render.md.html.comment.Context
+---@field text string
+
+---@alias render.md.html.comment.String
+---| string
+---| fun(ctx: render.md.html.comment.Context): string?
 
 ---@class (exact) render.md.html.Tag
 ---@field icon? string
@@ -966,9 +980,16 @@ M.html.default = {
     -- Additional modes to render HTML.
     render_modes = false,
     comment = {
+        -- Useful context to have when evaluating values.
+        -- | text | text value of the comment node |
+
         -- Turn on / off HTML comment concealing.
         conceal = true,
-        -- Optional text to inline before the concealed comment.
+        -- Text to inline before the concealed comment.
+        -- Output is evaluated depending on the type.
+        -- | function | `value(context)` |
+        -- | string   | `value`          |
+        -- | nil      | nothing          |
         text = nil,
         -- Highlight for the inlined text.
         highlight = 'RenderMarkdownHtmlComment',
@@ -995,7 +1016,10 @@ function M.html.schema()
         comment = {
             record = {
                 conceal = { type = 'boolean' },
-                text = { optional = true, type = 'string' },
+                text = {
+                    optional = true,
+                    union = { { type = 'string' }, { type = 'function' } },
+                },
                 highlight = { type = 'string' },
             },
         },
@@ -1094,6 +1118,11 @@ M.inline_highlight = {}
 
 ---@class (exact) render.md.inline.highlight.Config: render.md.base.Config
 ---@field highlight string
+---@field custom table<string, render.md.inline.highlight.custom.Config>
+
+---@class (exact) render.md.inline.highlight.custom.Config
+---@field prefix string
+---@field highlight string
 
 ---@type render.md.inline.highlight.Config
 M.inline_highlight.default = {
@@ -1106,12 +1135,25 @@ M.inline_highlight.default = {
     render_modes = false,
     -- Applies to background of surrounded text.
     highlight = 'RenderMarkdownInlineHighlight',
+    -- Define custom highlights based on text prefix.
+    -- The key is for healthcheck and to allow users to change its values, value type below.
+    -- | prefix    | matched against text body, @see :h vim.startswith() |
+    -- | highlight | highlight for text body                             |
+    custom = {},
 }
 
 ---@return render.md.Schema
 function M.inline_highlight.schema()
+    ---@type render.md.Schema
+    local custom = {
+        record = {
+            prefix = { type = 'string' },
+            highlight = { type = 'string' },
+        },
+    }
     return M.base.schema({
         highlight = { type = 'string' },
+        custom = { map = { { type = 'string' }, custom } },
     })
 end
 
@@ -1139,7 +1181,7 @@ M.latex.default = {
     -- Additional modes to render latex.
     render_modes = false,
     -- Executable used to convert latex formula to rendered unicode.
-    -- If a list is provided the first command available on the system is used.
+    -- If a list is provided the commands run in order until the first success.
     converter = { 'utftex', 'latex2text' },
     -- Highlight for latex blocks.
     highlight = 'RenderMarkdownMath',
@@ -1262,15 +1304,23 @@ M.link.default = {
     -- | highlight | optional highlight for 'icon', uses fallback highlight if empty |
     custom = {
         web = { pattern = '^http', icon = '󰖟 ' },
+        apple = { pattern = 'apple%.com', icon = ' ' },
         discord = { pattern = 'discord%.com', icon = '󰙯 ' },
         github = { pattern = 'github%.com', icon = '󰊤 ' },
         gitlab = { pattern = 'gitlab%.com', icon = '󰮠 ' },
         google = { pattern = 'google%.com', icon = '󰊭 ' },
+        hackernews = { pattern = 'ycombinator%.com', icon = ' ' },
+        linkedin = { pattern = 'linkedin%.com', icon = '󰌻 ' },
+        microsoft = { pattern = 'microsoft%.com', icon = ' ' },
         neovim = { pattern = 'neovim%.io', icon = ' ' },
         reddit = { pattern = 'reddit%.com', icon = '󰑍 ' },
+        slack = { pattern = 'slack%.com', icon = '󰒱 ' },
         stackoverflow = { pattern = 'stackoverflow%.com', icon = '󰓌 ' },
+        steam = { pattern = 'steampowered%.com', icon = ' ' },
+        twitter = { pattern = 'x%.com', icon = ' ' },
         wikipedia = { pattern = 'wikipedia%.org', icon = '󰖬 ' },
-        youtube = { pattern = 'youtube%.com', icon = '󰗃 ' },
+        youtube = { pattern = 'youtube[^.]*%.com', icon = '󰗃 ' },
+        youtube_short = { pattern = 'youtu%.be', icon = '󰗃 ' },
     },
 }
 
@@ -1367,9 +1417,9 @@ M.overrides.default = {
     -- More granular configuration mechanism, allows different aspects of buffers to have their own
     -- behavior. Values default to the top level configuration if no override is provided. Supports
     -- the following fields:
-    --   enabled, render_modes, max_file_size, debounce, anti_conceal, bullet, callout, checkbox,
-    --   code, dash, document, heading, html, indent, inline_highlight, latex, link, padding,
-    --   paragraph, pipe_table, quote, sign, win_options, yaml
+    --   enabled, render_modes, debounce, anti_conceal, bullet, callout, checkbox, code, dash,
+    --   document, heading, html, indent, inline_highlight, latex, link, padding, paragraph,
+    --   pipe_table, quote, sign, win_options, yaml
 
     -- Override for different buflisted values, @see :h 'buflisted'.
     buflisted = {},
@@ -1377,6 +1427,7 @@ M.overrides.default = {
     buftype = {
         nofile = {
             render_modes = true,
+            code = { priority = 175 },
             padding = { highlight = 'NormalFloat' },
             sign = { enabled = false },
         },

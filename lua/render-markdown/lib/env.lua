@@ -1,4 +1,5 @@
 local compat = require('render-markdown.lib.compat')
+local list = require('render-markdown.lib.list')
 
 ---@class render.md.Env
 local M = {}
@@ -69,17 +70,15 @@ function M.range(buf, win, offset)
 end
 
 ---@param options string|string[]
----@return string?
-function M.command(options)
-    if type(options) == 'string' then
-        options = { options }
-    end
-    for _, option in ipairs(options) do
+---@return string[]
+function M.commands(options)
+    local result = {} ---@type string[]
+    for _, option in ipairs(list.ensure(options)) do
         if vim.fn.executable(option) == 1 then
-            return option
+            result[#result + 1] = option
         end
     end
-    return nil
+    return result
 end
 
 ---@class render.md.env.Row

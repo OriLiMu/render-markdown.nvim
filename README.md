@@ -188,9 +188,6 @@ require('render-markdown').setup({
     -- components. Individual components can be enabled for other modes. Remaining modes will be
     -- unaffected by this plugin.
     render_modes = { 'n', 'c', 't' },
-    -- Maximum file size (in MB) that this plugin will attempt to render.
-    -- File larger than this will effectively be ignored.
-    max_file_size = 10.0,
     -- Milliseconds that must pass before updating marks, updates occur.
     -- within the context of the visible window, not the entire buffer.
     debounce = 100,
@@ -208,6 +205,9 @@ require('render-markdown').setup({
     log_runtime = false,
     -- Filetypes this plugin will run on.
     file_types = { 'markdown' },
+    -- Maximum file size (in MB) that this plugin will attempt to render.
+    -- File larger than this will effectively be ignored.
+    max_file_size = 10.0,
     -- Takes buffer as input, if it returns true this plugin will not attach to the buffer.
     ignore = function()
         return false
@@ -266,6 +266,7 @@ require('render-markdown').setup({
         --   dash
         --   head_background, head_border, head_icon
         --   indent
+        --   latex
         --   link
         --   quote
         --   sign
@@ -288,7 +289,7 @@ require('render-markdown').setup({
         -- Additional modes to render latex.
         render_modes = false,
         -- Executable used to convert latex formula to rendered unicode.
-        -- If a list is provided the first command available on the system is used.
+        -- If a list is provided the commands run in order until the first success.
         converter = { 'utftex', 'latex2text' },
         -- Highlight for latex blocks.
         highlight = 'RenderMarkdownMath',
@@ -506,6 +507,8 @@ require('render-markdown').setup({
         inline_right = '',
         -- Padding to add to the left & right of inline code.
         inline_pad = 0,
+        -- Priority to assign to code background highlight.
+        priority = nil,
         -- Highlight for code blocks.
         highlight = 'RenderMarkdownCode',
         -- Highlight for code info section, after the language.
@@ -815,15 +818,23 @@ require('render-markdown').setup({
         -- | highlight | optional highlight for 'icon', uses fallback highlight if empty |
         custom = {
             web = { pattern = '^http', icon = '󰖟 ' },
+            apple = { pattern = 'apple%.com', icon = ' ' },
             discord = { pattern = 'discord%.com', icon = '󰙯 ' },
             github = { pattern = 'github%.com', icon = '󰊤 ' },
             gitlab = { pattern = 'gitlab%.com', icon = '󰮠 ' },
             google = { pattern = 'google%.com', icon = '󰊭 ' },
+            hackernews = { pattern = 'ycombinator%.com', icon = ' ' },
+            linkedin = { pattern = 'linkedin%.com', icon = '󰌻 ' },
+            microsoft = { pattern = 'microsoft%.com', icon = ' ' },
             neovim = { pattern = 'neovim%.io', icon = ' ' },
             reddit = { pattern = 'reddit%.com', icon = '󰑍 ' },
+            slack = { pattern = 'slack%.com', icon = '󰒱 ' },
             stackoverflow = { pattern = 'stackoverflow%.com', icon = '󰓌 ' },
+            steam = { pattern = 'steampowered%.com', icon = ' ' },
+            twitter = { pattern = 'x%.com', icon = ' ' },
             wikipedia = { pattern = 'wikipedia%.org', icon = '󰖬 ' },
-            youtube = { pattern = 'youtube%.com', icon = '󰗃 ' },
+            youtube = { pattern = 'youtube[^.]*%.com', icon = '󰗃 ' },
+            youtube_short = { pattern = 'youtu%.be', icon = '󰗃 ' },
         },
     },
     sign = {
@@ -842,6 +853,11 @@ require('render-markdown').setup({
         render_modes = false,
         -- Applies to background of surrounded text.
         highlight = 'RenderMarkdownInlineHighlight',
+        -- Define custom highlights based on text prefix.
+        -- The key is for healthcheck and to allow users to change its values, value type below.
+        -- | prefix    | matched against text body, @see :h vim.startswith() |
+        -- | highlight | highlight for text body                             |
+        custom = {},
     },
     indent = {
         -- Mimic org-indent-mode behavior by indenting everything under a heading based on the
@@ -871,9 +887,16 @@ require('render-markdown').setup({
         -- Additional modes to render HTML.
         render_modes = false,
         comment = {
+            -- Useful context to have when evaluating values.
+            -- | text | text value of the comment node |
+
             -- Turn on / off HTML comment concealing.
             conceal = true,
-            -- Optional text to inline before the concealed comment.
+            -- Text to inline before the concealed comment.
+            -- Output is evaluated depending on the type.
+            -- | function | `value(context)` |
+            -- | string   | `value`          |
+            -- | nil      | nothing          |
             text = nil,
             -- Highlight for the inlined text.
             highlight = 'RenderMarkdownHtmlComment',
@@ -907,9 +930,9 @@ require('render-markdown').setup({
         -- More granular configuration mechanism, allows different aspects of buffers to have their own
         -- behavior. Values default to the top level configuration if no override is provided. Supports
         -- the following fields:
-        --   enabled, render_modes, max_file_size, debounce, anti_conceal, bullet, callout, checkbox,
-        --   code, dash, document, heading, html, indent, inline_highlight, latex, link, padding,
-        --   paragraph, pipe_table, quote, sign, win_options, yaml
+        --   enabled, render_modes, debounce, anti_conceal, bullet, callout, checkbox, code, dash,
+        --   document, heading, html, indent, inline_highlight, latex, link, padding, paragraph,
+        --   pipe_table, quote, sign, win_options, yaml
 
         -- Override for different buflisted values, @see :h 'buflisted'.
         buflisted = {},
@@ -917,6 +940,7 @@ require('render-markdown').setup({
         buftype = {
             nofile = {
                 render_modes = true,
+                code = { priority = 175 },
                 padding = { highlight = 'NormalFloat' },
                 sign = { enabled = false },
             },
@@ -1166,6 +1190,8 @@ require('render-markdown').setup({
         inline_right = '',
         -- Padding to add to the left & right of inline code.
         inline_pad = 0,
+        -- Priority to assign to code background highlight.
+        priority = nil,
         -- Highlight for code blocks.
         highlight = 'RenderMarkdownCode',
         -- Highlight for code info section, after the language.
@@ -1566,15 +1592,23 @@ require('render-markdown').setup({
         -- | highlight | optional highlight for 'icon', uses fallback highlight if empty |
         custom = {
             web = { pattern = '^http', icon = '󰖟 ' },
+            apple = { pattern = 'apple%.com', icon = ' ' },
             discord = { pattern = 'discord%.com', icon = '󰙯 ' },
             github = { pattern = 'github%.com', icon = '󰊤 ' },
             gitlab = { pattern = 'gitlab%.com', icon = '󰮠 ' },
             google = { pattern = 'google%.com', icon = '󰊭 ' },
+            hackernews = { pattern = 'ycombinator%.com', icon = ' ' },
+            linkedin = { pattern = 'linkedin%.com', icon = '󰌻 ' },
+            microsoft = { pattern = 'microsoft%.com', icon = ' ' },
             neovim = { pattern = 'neovim%.io', icon = ' ' },
             reddit = { pattern = 'reddit%.com', icon = '󰑍 ' },
+            slack = { pattern = 'slack%.com', icon = '󰒱 ' },
             stackoverflow = { pattern = 'stackoverflow%.com', icon = '󰓌 ' },
+            steam = { pattern = 'steampowered%.com', icon = ' ' },
+            twitter = { pattern = 'x%.com', icon = ' ' },
             wikipedia = { pattern = 'wikipedia%.org', icon = '󰖬 ' },
-            youtube = { pattern = 'youtube%.com', icon = '󰗃 ' },
+            youtube = { pattern = 'youtube[^.]*%.com', icon = '󰗃 ' },
+            youtube_short = { pattern = 'youtu%.be', icon = '󰗃 ' },
         },
     },
 })
@@ -1768,11 +1802,11 @@ The table below shows all the highlight groups with their default link
 
 # Acknowledgments
 
-- [headlines.nvim](https://github.com/lukas-reineke/headlines.nvim): The plugin that
-  inspired me to create this one and whose implementation I used as a reference for
-  the original version
-- [crates.nvim](https://github.com/Saecki/crates.nvim): Used the in-process lsp implementation
-  as an awesome reference [lsp.lua](https://github.com/saecki/crates.nvim/blob/main/lua/crates/lsp.lua)
+- [headlines.nvim](https://github.com/lukas-reineke/headlines.nvim): The plugin
+  that inspired me to create this one and whose implementation I used as a reference
+  for the original version
+- [crates.nvim](https://github.com/Saecki/crates.nvim): Used the in-process lsp
+  implementation as an awesome reference [lsp.lua](https://github.com/saecki/crates.nvim/blob/main/lua/crates/lsp.lua)
 
 <!-- panvimdoc-ignore-start -->
 

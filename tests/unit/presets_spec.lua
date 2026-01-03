@@ -1,13 +1,13 @@
 ---@module 'luassert'
 
----@param user render.md.UserConfig
----@param expected render.md.UserConfig
-local function validate(user, expected)
-    local actual = require('render-markdown.lib.presets').get(user)
-    assert.same(expected, actual)
-end
-
 describe('presets', function()
+    ---@param user render.md.UserConfig
+    ---@param expected render.md.UserConfig
+    local function validate(user, expected)
+        local actual = require('render-markdown.lib.presets').get(user)
+        assert.same(expected, actual)
+    end
+
     it('overlap', function()
         validate({
             preset = 'lazy',
@@ -25,9 +25,6 @@ describe('presets', function()
                 icons = {},
             },
             checkbox = { enabled = false },
-            pipe_table = {},
-            win_options = {},
-            overrides = {},
         })
     end)
 
@@ -35,24 +32,14 @@ describe('presets', function()
         validate({
             code = { style = 'none' },
             overrides = {
-                buftype = {
-                    nofile = {
-                        code = { style = 'normal' },
-                    },
-                },
+                buftype = { nofile = { code = { style = 'normal' } } },
+                preview = { pipe_table = { style = 'normal' } },
             },
         }, {
             code = { enabled = false },
-            pipe_table = {},
-            win_options = {},
             overrides = {
-                buftype = {
-                    nofile = {
-                        code = { language = false },
-                        pipe_table = {},
-                        win_options = {},
-                    },
-                },
+                buftype = { nofile = { code = { language = false } } },
+                preview = { pipe_table = { border_enabled = false } },
             },
         })
     end)
